@@ -3,15 +3,13 @@ package test.pivotal.pal.trackerapi;
 import com.jayway.jsonpath.DocumentContext;
 import io.pivotal.pal.tracker.PalTrackerApplication;
 import io.pivotal.pal.tracker.TimeEntry;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
@@ -30,7 +28,7 @@ public class TimeEntryApiTest {
 
     private final long projectId = 123L;
     private final long userId = 456L;
-    private TimeEntry timeEntry = new TimeEntry(projectId, userId, LocalDate.parse("2017-01-08"), 8);
+    private TimeEntry timeEntry = new TimeEntry(projectId, userId, LocalDate.parse("2017-01-31"), 8);
 
     @Test
     public void testCreate() throws Exception {
@@ -43,7 +41,31 @@ public class TimeEntryApiTest {
         assertThat(createJson.read("$.id", Long.class)).isGreaterThan(0);
         assertThat(createJson.read("$.projectId", Long.class)).isEqualTo(projectId);
         assertThat(createJson.read("$.userId", Long.class)).isEqualTo(userId);
-        assertThat(createJson.read("$.date", String.class)).isEqualTo("2017-01-08");
+        assertThat(createJson.read("$.date", String.class)).isEqualTo("2017-01-31");
+        assertThat(createJson.read("$.hours", Long.class)).isEqualTo(8);
+    }
+
+    @Test
+    public void testCreateAmericanDateFormat() throws Exception {
+
+
+        String timeEntryAmericanJsonStr = "{\"projectId\": 1, \"userId\": 2, \"date\": \"2019/31/01\", \"hours\": 8}";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(timeEntryAmericanJsonStr, headers);
+
+        ResponseEntity<String> createResponse = restTemplate.postForEntity("/time-entries", entity, String.class);
+
+
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        DocumentContext createJson = parse(createResponse.getBody());
+        assertThat(createJson.read("$.id", Long.class)).isGreaterThan(0);
+        assertThat(createJson.read("$.projectId", Long.class)).isEqualTo(1);
+        assertThat(createJson.read("$.userId", Long.class)).isEqualTo(2);
+        assertThat(createJson.read("$.date", String.class)).isEqualTo("2019-01-31");
         assertThat(createJson.read("$.hours", Long.class)).isEqualTo(8);
     }
 
@@ -79,7 +101,7 @@ public class TimeEntryApiTest {
         assertThat(readJson.read("$.id", Long.class)).isEqualTo(id);
         assertThat(readJson.read("$.projectId", Long.class)).isEqualTo(projectId);
         assertThat(readJson.read("$.userId", Long.class)).isEqualTo(userId);
-        assertThat(readJson.read("$.date", String.class)).isEqualTo("2017-01-08");
+        assertThat(readJson.read("$.date", String.class)).isEqualTo("2017-01-31");
         assertThat(readJson.read("$.hours", Long.class)).isEqualTo(8);
     }
 
