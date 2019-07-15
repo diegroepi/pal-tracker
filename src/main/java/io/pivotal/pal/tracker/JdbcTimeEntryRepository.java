@@ -44,9 +44,6 @@ public class JdbcTimeEntryRepository implements TimeEntryRepository {
     }
 
 
-
-
-
     @Override
     public TimeEntry find(long id) {
         return jdbcTemplate.query(
